@@ -133,11 +133,11 @@ def forwardCheck(puzzle, domains):
             if len(domains[i][j]) == 0:
                 solution = False
 
-    return puzzle, domains, solution
+    return domains, solution
 
 def selectUnassignedVar(puzzle, domains):
     # MRV
-    minRem = len(domains[0][0])
+    minRem = 10
     minRemVars = []
     for i in range(9):
         for j in range(9):
@@ -149,7 +149,6 @@ def selectUnassignedVar(puzzle, domains):
                     minRemVars = []
                     minRem = newVal
                     minRemVars.append((i,j))
-                    
     # Degree
     minDeg = None
     varRow = None
@@ -217,6 +216,31 @@ def selectUnassignedVar(puzzle, domains):
 
     return varRow, varCol
 
+def solver(puzzle, domains):
+    # Check if solved
+    solved = True
+    for i in range(9):
+        for j in range(9):
+            if puzzle[i][j] == "0":
+                solved = False
+    if solved:
+        return puzzle
+
+    # Not Solved
+    row, col = selectUnassignedVar(puzzle, domains)
+    domain = domains[row][col]
+    for elem in domain:
+        copyDomains = copy.deepcopy(domains)
+        copyPuzzle = copy.deepcopy(puzzle)
+        copyDomains[row][col] = [elem]
+        copyPuzzle[row][col] = elem    
+        newDomains, solution = forwardCheck(copyPuzzle, copyDomains)
+        if solution:
+            finished = solver(copyPuzzle, newDomains)
+            if finished != None:
+                return finished
+    return None
+
 def main():
     #filename = input("What is the input filename?")
     puzzle = readInput("input1.txt")
@@ -226,16 +250,7 @@ def main():
         for j in range(9):
             newList.append(['1', '2', '3', '4', '5', '6', '7', '8', '9'])
         domains.append(newList)
-    puzzle, domains, solution = forwardCheck(puzzle, domains)
-
-    if not solution:
-        # No solution
-        pass
-
-    for elem in domains:
-        print(elem, end='\n')
-
-    print(selectUnassignedVar(puzzle, domains))
-
+    domains, solution = forwardCheck(puzzle, domains)
+    print(solver(puzzle, domains))
 
 main()
